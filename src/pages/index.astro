@@ -211,7 +211,7 @@ const title = 'GitHub Contribution Battle Arena';
 		margin-top: 2rem;
 	}
 
-	.player-card {
+	:global(.player-card) {
 		min-width: 0;
 		padding: 1.25rem;
 		border: 1px solid #374151;
@@ -219,28 +219,28 @@ const title = 'GitHub Contribution Battle Arena';
 		background: #1f2937;
 	}
 
-	.player-card h2 {
+	:global(.player-card h2) {
 		margin: 0;
 		overflow-wrap: anywhere;
 		font-size: 1.25rem;
 	}
 
-	.total {
+	:global(.total) {
 		margin: 0.5rem 0 0;
 		color: #cbd5e1;
 	}
 
-	.range {
+	:global(.range) {
 		color: #94a3b8;
 		font-size: 0.85rem;
 	}
 
-	.graph-wrap {
+	:global(.graph-wrap) {
 		overflow-x: auto;
 		padding: 0.75rem 0 0.25rem;
 	}
 
-	.graph {
+	:global(.graph) {
 		display: grid;
 		grid-auto-columns: 0.62rem;
 		grid-auto-flow: column;
@@ -249,14 +249,14 @@ const title = 'GitHub Contribution Battle Arena';
 		width: max-content;
 	}
 
-	.day {
+	:global(.day) {
 		width: 0.62rem;
 		height: 0.62rem;
 		border-radius: 2px;
-		background: var(--day-color);
+		background-color: var(--day-color);
 	}
 
-	.results .versus {
+	.results :global(.versus) {
 		align-self: center;
 		padding: 0.5rem 0;
 	}
@@ -279,7 +279,7 @@ const title = 'GitHub Contribution Battle Arena';
 			grid-template-columns: 1fr;
 		}
 
-		.results .versus {
+		.results :global(.versus) {
 			justify-self: center;
 		}
 	}
