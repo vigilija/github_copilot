@@ -358,6 +358,35 @@ const title = 'GitHub Contribution Battle Arena';
 		display: none;
 	}
 
+	:global(.champion-banner) {
+		position: relative;
+		grid-column: 1 / -1;
+		margin: 0 0 0.5rem;
+		padding: 1.25rem 1rem;
+		overflow: hidden;
+		border: 2px solid var(--arcade-primary);
+		border-radius: 0.35rem;
+		background: linear-gradient(110deg, rgb(var(--arcade-primary-rgb) / 18%), rgb(var(--arcade-secondary-rgb) / 24%));
+		box-shadow: 0 0 18px rgb(var(--arcade-primary-rgb) / 30%), inset 0 0 18px rgb(var(--arcade-secondary-rgb) / 15%);
+		color: var(--arcade-primary);
+		font-size: clamp(0.65rem, 2.2vw, 1rem);
+		line-height: 1.8;
+		text-align: center;
+		text-shadow: 0 0 8px rgb(var(--arcade-primary-rgb) / 85%), 0 0 20px rgb(var(--arcade-secondary-rgb) / 60%);
+		overflow-wrap: anywhere;
+		animation: champion-enter 700ms cubic-bezier(0.2, 0.75, 0.25, 1) both, champion-glow 1.8s 700ms ease-in-out infinite alternate;
+	}
+
+	:global(.champion-banner::after) {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(110deg, transparent 25%, rgb(255 255 255 / 18%) 50%, transparent 75%);
+		content: "";
+		pointer-events: none;
+		transform: translateX(-120%);
+		animation: champion-shine 1.2s 250ms ease-out both;
+	}
+
 	:global(.player-card) {
 		position: relative;
 		isolation: isolate;
@@ -541,6 +570,38 @@ const title = 'GitHub Contribution Battle Arena';
 		to {
 			opacity: 1;
 			transform: translateY(0);
+		}
+	}
+
+	@keyframes champion-enter {
+		from {
+			opacity: 0;
+			transform: scale(0.85) translateY(12px);
+		}
+
+		70% {
+			transform: scale(1.04);
+		}
+
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes champion-glow {
+		from {
+			box-shadow: 0 0 14px rgb(var(--arcade-primary-rgb) / 24%), inset 0 0 14px rgb(var(--arcade-secondary-rgb) / 12%);
+		}
+
+		to {
+			box-shadow: 0 0 28px rgb(var(--arcade-primary-rgb) / 48%), inset 0 0 22px rgb(var(--arcade-secondary-rgb) / 24%);
+		}
+	}
+
+	@keyframes champion-shine {
+		to {
+			transform: translateX(120%);
 		}
 	}
 
@@ -938,7 +999,21 @@ const title = 'GitHub Contribution Battle Arena';
 				fetchContributions(usernames[1]),
 			]);
 
+			const champion = document.createElement('p');
+			champion.className = 'champion-banner';
+			champion.setAttribute('role', 'status');
+			champion.setAttribute('aria-live', 'polite');
+			if (playerOneData.total_contributions === playerTwoData.total_contributions) {
+				champion.textContent = `🤝 ${usernames[0]} & ${usernames[1]} IT'S A TIE! 🤝`;
+			} else {
+				const winner = playerOneData.total_contributions > playerTwoData.total_contributions
+					? usernames[0]
+					: usernames[1];
+				champion.textContent = `🏆 ${winner} WINS! 🏆`;
+			}
+
 			results.append(
+				champion,
 				renderPlayer(usernames[0], playerOneData),
 				Object.assign(document.createElement('span'), {
 					className: 'versus',
