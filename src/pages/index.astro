@@ -64,6 +64,7 @@ const title = 'GitHub Contribution Battle Arena';
 			</form>
 
 			<section id="results" class="results" aria-label="Battle results" hidden></section>
+			<div id="day-tooltip" class="day-tooltip" role="tooltip" hidden></div>
 		</main>
 	</body>
 </html>
@@ -256,6 +257,25 @@ const title = 'GitHub Contribution Battle Arena';
 		background-color: var(--day-color);
 	}
 
+	:global(.day-tooltip) {
+		position: fixed;
+		z-index: 10;
+		max-width: calc(100vw - 1rem);
+		padding: 0.4rem 0.6rem;
+		border: 1px solid #64748b;
+		border-radius: 0.4rem;
+		background: #030712;
+		color: #f9fafb;
+		font-size: 0.8rem;
+		line-height: 1.3;
+		white-space: nowrap;
+		pointer-events: none;
+	}
+
+	:global(.day-tooltip[hidden]) {
+		display: none;
+	}
+
 	.results :global(.versus) {
 		align-self: center;
 		padding: 0.5rem 0;
@@ -311,8 +331,9 @@ const title = 'GitHub Contribution Battle Arena';
 	const battleButton = document.querySelector<HTMLButtonElement>('#battle-button');
 	const battleStatus = document.querySelector<HTMLParagraphElement>('#battle-status');
 	const results = document.querySelector<HTMLElement>('#results');
+	const dayTooltip = document.querySelector<HTMLDivElement>('#day-tooltip');
 
-	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !battleStatus || !results) {
+	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !battleStatus || !results || !dayTooltip) {
 		throw new Error('Battle page is missing required form elements.');
 	}
 
@@ -417,7 +438,7 @@ const title = 'GitHub Contribution Battle Arena';
 					data.colors_full[day.level] ?? data.colors_full[0] ?? '#ebedf0',
 				);
 				const dateLabel = date.toISOString().slice(0, 10);
-				square.title = `${dateLabel}: ${day.count} contribution${day.count === 1 ? '' : 's'}`;
+				square.dataset.tooltip = `${formatDate(dateLabel)} · ${day.count} contribution${day.count === 1 ? '' : 's'}`;
 				graph.append(square);
 			}
 		}
@@ -426,6 +447,49 @@ const title = 'GitHub Contribution Battle Arena';
 		card.append(graphWrap);
 		return card;
 	}
+
+	function showDayTooltip(square: HTMLElement): void {
+		const tooltipText = square.dataset.tooltip;
+		if (!tooltipText) return;
+
+		dayTooltip.textContent = tooltipText;
+		dayTooltip.hidden = false;
+		square.setAttribute('aria-describedby', 'day-tooltip');
+
+		const squareRect = square.getBoundingClientRect();
+		const tooltipRect = dayTooltip.getBoundingClientRect();
+		const left = Math.min(
+			Math.max(squareRect.left + squareRect.width / 2 - tooltipRect.width / 2, 8),
+			window.innerWidth - tooltipRect.width - 8,
+		);
+		const top = squareRect.top - tooltipRect.height - 8 >= 8
+			? squareRect.top - tooltipRect.height - 8
+			: squareRect.bottom + 8;
+
+		dayTooltip.style.left = `${left}px`;
+		dayTooltip.style.top = `${top}px`;
+	}
+
+	function hideDayTooltip(): void {
+		dayTooltip.hidden = true;
+		results.querySelector('[aria-describedby="day-tooltip"]')?.removeAttribute('aria-describedby');
+	}
+
+	results.addEventListener('pointerover', (event) => {
+		const target = event.target;
+		if (target instanceof Element) {
+			const square = target.closest<HTMLElement>('.day');
+			if (square && results.contains(square)) showDayTooltip(square);
+		}
+	});
+
+	results.addEventListener('pointerout', (event) => {
+		const nextTarget = event.relatedTarget;
+		if (nextTarget instanceof Element && nextTarget.closest('.day') && results.contains(nextTarget)) {
+			return;
+		}
+		hideDayTooltip();
+	});
 
 	form.addEventListener('submit', async (event) => {
 		event.preventDefault();
