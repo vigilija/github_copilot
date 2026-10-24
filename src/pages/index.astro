@@ -686,7 +686,7 @@ const title = 'GitHub Contribution Battle Arena';
 	function validateUsername(username: string): string | undefined {
 		if (!username) return 'Enter a GitHub username.';
 		if (username.length > 39 || !/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/.test(username)) {
-			return 'Use 1–39 letters or numbers, with single hyphens only between characters.';
+			return 'Use 1-39 letters or numbers, with single hyphens only between characters.';
 		}
 		return undefined;
 	}
