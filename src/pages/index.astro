@@ -24,6 +24,9 @@ const title = 'GitHub Contribution Battle Arena';
 				<p class="eyebrow">Mona Mayhem presents</p>
 				<h1>{title}</h1>
 				<p>Two developers enter. Compare a year of GitHub contributions.</p>
+				<button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">
+					Switch to blue + orange
+				</button>
 			</header>
 
 			<form id="battle-form" novalidate>
@@ -39,10 +42,11 @@ const title = 'GitHub Contribution Battle Arena';
 								autocomplete="username"
 								placeholder="octocat"
 								maxlength="39"
-								aria-describedby="battle-status"
+								aria-describedby="player-one-error"
 								required
 							/>
 						</div>
+						<p id="player-one-error" class="field-error" hidden></p>
 					</div>
 
 					<span class="versus" aria-hidden="true">VS</span>
@@ -58,10 +62,11 @@ const title = 'GitHub Contribution Battle Arena';
 								autocomplete="off"
 								placeholder="torvalds"
 								maxlength="39"
-								aria-describedby="battle-status"
+								aria-describedby="player-two-error"
 								required
 							/>
 						</div>
+						<p id="player-two-error" class="field-error" hidden></p>
 					</div>
 				</div>
 
@@ -84,11 +89,27 @@ const title = 'GitHub Contribution Battle Arena';
 		--arcade-bg: #0a0a1a;
 		--arcade-panel: #111126;
 		--arcade-panel-raised: #17172f;
-		--arcade-green: #5fed83;
-		--arcade-purple: #8a2be2;
+		--arcade-primary: #5fed83;
+		--arcade-primary-rgb: 95 237 131;
+		--arcade-secondary: #8a2be2;
+		--arcade-secondary-rgb: 138 43 226;
+		--arcade-button-start: #43117a;
+		--arcade-button-end: #251047;
+		--arcade-loading-end: #c49aff;
+		--arcade-error: #ff3366;
 		--arcade-text: #f3f4ff;
 		--arcade-muted: #aaaac4;
 		--arcade-font: "Press Start 2P", "Courier New", monospace;
+	}
+
+	:global(html[data-theme="blue-orange"]) {
+		--arcade-primary: #00f5ff;
+		--arcade-primary-rgb: 0 245 255;
+		--arcade-secondary: #ff6b35;
+		--arcade-secondary-rgb: 255 107 53;
+		--arcade-button-start: #7a301a;
+		--arcade-button-end: #471b10;
+		--arcade-loading-end: #ff6b35;
 	}
 
 	:global(html) {
@@ -105,7 +126,7 @@ const title = 'GitHub Contribution Battle Arena';
 		margin: 0;
 		min-width: 320px;
 		background:
-			radial-gradient(ellipse at 50% 0%, rgb(138 43 226 / 15%), transparent 52%),
+			radial-gradient(ellipse at 50% 0%, rgb(var(--arcade-secondary-rgb) / 15%), transparent 52%),
 			var(--arcade-bg) fixed;
 		color: var(--arcade-text);
 		font-family: var(--arcade-font);
@@ -142,17 +163,17 @@ const title = 'GitHub Contribution Battle Arena';
 	}
 
 	.eyebrow {
-		color: var(--arcade-green);
+		color: var(--arcade-primary);
 		font-size: 0.55rem;
-		text-shadow: 0 0 10px rgb(95 237 131 / 65%);
+		text-shadow: 0 0 10px rgb(var(--arcade-primary-rgb) / 65%);
 	}
 
 	h1 {
 		margin: 1rem 0;
-		color: var(--arcade-green);
+		color: var(--arcade-primary);
 		font-size: clamp(1.25rem, 3vw, 2.1rem);
 		line-height: 1.8;
-		text-shadow: 0 0 5px var(--arcade-green), 0 0 16px rgb(95 237 131 / 75%);
+		text-shadow: 0 0 5px var(--arcade-primary), 0 0 16px rgb(var(--arcade-primary-rgb) / 75%);
 		animation: neon-pulse 2.4s ease-in-out infinite alternate;
 	}
 
@@ -163,10 +184,10 @@ const title = 'GitHub Contribution Battle Arena';
 
 	form {
 		padding: 1.5rem;
-		border: 1px solid rgb(138 43 226 / 70%);
+		border: 1px solid rgb(var(--arcade-secondary-rgb) / 70%);
 		border-radius: 0.35rem;
 		background: linear-gradient(145deg, rgb(23 23 47 / 96%), rgb(12 12 29 / 96%));
-		box-shadow: 0 0 20px rgb(138 43 226 / 16%), inset 0 0 18px rgb(95 237 131 / 4%);
+		box-shadow: 0 0 20px rgb(var(--arcade-secondary-rgb) / 16%), inset 0 0 18px rgb(var(--arcade-primary-rgb) / 4%);
 	}
 
 	.players {
@@ -179,7 +200,7 @@ const title = 'GitHub Contribution Battle Arena';
 	.field label {
 		display: block;
 		margin-bottom: 0.5rem;
-		color: var(--arcade-green);
+		color: var(--arcade-primary);
 		font-size: 0.58rem;
 	}
 
@@ -196,16 +217,17 @@ const title = 'GitHub Contribution Battle Arena';
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0 0.75rem;
-		border: 1px solid rgb(138 43 226 / 70%);
+		border: 1px solid rgb(var(--arcade-secondary-rgb) / 70%);
 		border-radius: 0.25rem;
 		background: #080817;
-		color: var(--arcade-purple);
+		color: var(--arcade-secondary);
 		transition: border-color 160ms ease, box-shadow 160ms ease;
 	}
 
 	input {
 		width: 100%;
 		min-width: 0;
+		min-height: 44px;
 		padding: 0.9rem 0;
 		border: 0;
 		outline: 0;
@@ -216,10 +238,32 @@ const title = 'GitHub Contribution Battle Arena';
 	}
 
 	.username-input:focus-within {
-		border-color: var(--arcade-green);
-		outline: 2px solid var(--arcade-green);
+		border-color: var(--arcade-primary);
+		outline: 2px solid var(--arcade-primary);
 		outline-offset: 2px;
-		box-shadow: 0 0 12px rgb(95 237 131 / 28%);
+		box-shadow: 0 0 12px rgb(var(--arcade-primary-rgb) / 28%);
+	}
+
+	.username-input.is-invalid {
+		border-color: var(--arcade-error);
+		box-shadow: 0 0 10px rgb(255 51 102 / 38%), inset 0 0 8px rgb(255 51 102 / 10%);
+	}
+
+	.username-input.is-invalid:focus-within {
+		outline-color: var(--arcade-error);
+		box-shadow: 0 0 14px rgb(255 51 102 / 48%), inset 0 0 8px rgb(255 51 102 / 10%);
+	}
+
+	.field-error {
+		margin: 0.5rem 0 0;
+		color: var(--arcade-error);
+		font-size: 0.48rem;
+		line-height: 1.8;
+		text-shadow: 0 0 5px rgb(255 51 102 / 75%), 0 0 12px rgb(255 51 102 / 42%);
+	}
+
+	.field-error[hidden] {
+		display: none;
 	}
 
 	input::placeholder {
@@ -228,7 +272,7 @@ const title = 'GitHub Contribution Battle Arena';
 
 	.versus {
 		padding-bottom: 0.65rem;
-		background: linear-gradient(110deg, var(--arcade-green), var(--arcade-purple), var(--arcade-green));
+		background: linear-gradient(110deg, var(--arcade-primary), var(--arcade-secondary), var(--arcade-primary));
 		background-size: 220% 100%;
 		background-clip: text;
 		color: transparent;
@@ -240,12 +284,13 @@ const title = 'GitHub Contribution Battle Arena';
 	button {
 		display: block;
 		min-width: 12rem;
+		min-height: 44px;
 		margin: 1.5rem auto 0;
 		padding: 1rem 1.25rem;
-		border: 1px solid var(--arcade-purple);
+		border: 1px solid var(--arcade-secondary);
 		border-radius: 0.25rem;
-		background: linear-gradient(110deg, #43117a, #251047);
-		box-shadow: 0 0 12px rgb(138 43 226 / 35%);
+		background: linear-gradient(110deg, var(--arcade-button-start), var(--arcade-button-end));
+		box-shadow: 0 0 12px rgb(var(--arcade-secondary-rgb) / 35%);
 		color: var(--arcade-text);
 		font: inherit;
 		font-size: 0.55rem;
@@ -255,18 +300,29 @@ const title = 'GitHub Contribution Battle Arena';
 
 	button:hover:not(:disabled) {
 		transform: translateY(-2px);
-		border-color: var(--arcade-green);
-		box-shadow: 0 0 18px rgb(95 237 131 / 38%);
+		border-color: var(--arcade-primary);
+		box-shadow: 0 0 18px rgb(var(--arcade-primary-rgb) / 38%);
 	}
 
 	button:focus-visible {
-		outline: 2px solid var(--arcade-green);
+		outline: 2px solid var(--arcade-primary);
 		outline-offset: 3px;
 	}
 
 	button:disabled {
 		cursor: wait;
 		opacity: 0.7;
+	}
+
+	.theme-toggle {
+		min-width: 0;
+		min-height: 44px;
+		margin: 1.25rem auto 0;
+		padding: 0.65rem 0.8rem;
+		border-color: var(--arcade-primary);
+		background: var(--arcade-panel);
+		box-shadow: 0 0 10px rgb(var(--arcade-primary-rgb) / 18%);
+		font-size: 0.45rem;
 	}
 
 	.status {
@@ -279,6 +335,15 @@ const title = 'GitHub Contribution Battle Arena';
 
 	.status.is-loading {
 		animation: loading-colors 1.3s ease-in-out infinite alternate;
+	}
+
+	.status.is-error {
+		color: var(--arcade-error);
+		text-shadow: 0 0 5px rgb(255 51 102 / 78%), 0 0 14px rgb(255 51 102 / 48%);
+	}
+
+	.shake {
+		animation: error-shake 420ms ease-in-out;
 	}
 
 	.results {
@@ -299,10 +364,10 @@ const title = 'GitHub Contribution Battle Arena';
 		min-width: 0;
 		padding: 1.25rem;
 		overflow: hidden;
-		border: 1px solid rgb(95 237 131 / 52%);
+		border: 1px solid rgb(var(--arcade-primary-rgb) / 52%);
 		border-radius: 0.3rem;
 		background: linear-gradient(145deg, var(--arcade-panel-raised), var(--arcade-panel));
-		box-shadow: 0 0 14px rgb(95 237 131 / 10%);
+		box-shadow: 0 0 14px rgb(var(--arcade-primary-rgb) / 10%);
 		animation: card-enter 500ms ease-out both;
 	}
 
@@ -313,8 +378,8 @@ const title = 'GitHub Contribution Battle Arena';
 		background: linear-gradient(
 			115deg,
 			transparent 42%,
-			rgb(95 237 131 / 13%) 48%,
-			rgb(138 43 226 / 18%) 50%,
+			rgb(var(--arcade-primary-rgb) / 13%) 48%,
+			rgb(var(--arcade-secondary-rgb) / 18%) 50%,
 			transparent 57%
 		);
 		content: "";
@@ -328,7 +393,7 @@ const title = 'GitHub Contribution Battle Arena';
 		z-index: 1;
 		margin: 0;
 		overflow-wrap: anywhere;
-		color: var(--arcade-green);
+		color: var(--arcade-primary);
 		font-size: 0.72rem;
 		line-height: 1.8;
 	}
@@ -377,7 +442,7 @@ const title = 'GitHub Contribution Battle Arena';
 	:global(.day:hover) {
 		z-index: 2;
 		transform: scale(1.55);
-		box-shadow: 0 0 6px var(--day-color), 0 0 13px var(--arcade-green);
+		box-shadow: 0 0 6px var(--day-color), 0 0 13px var(--arcade-primary);
 	}
 
 	:global(.day-tooltip) {
@@ -385,10 +450,10 @@ const title = 'GitHub Contribution Battle Arena';
 		z-index: 10;
 		max-width: calc(100vw - 1rem);
 		padding: 0.4rem 0.6rem;
-		border: 1px solid var(--arcade-purple);
+		border: 1px solid var(--arcade-secondary);
 		border-radius: 0.2rem;
 		background: #080817;
-		box-shadow: 0 0 12px rgb(138 43 226 / 35%);
+		box-shadow: 0 0 12px rgb(var(--arcade-secondary-rgb) / 35%);
 		color: var(--arcade-text);
 		font-family: system-ui, sans-serif;
 		font-size: 0.75rem;
@@ -404,7 +469,7 @@ const title = 'GitHub Contribution Battle Arena';
 	.results :global(.versus) {
 		align-self: center;
 		padding: 0.5rem 0;
-		background: linear-gradient(110deg, var(--arcade-green), var(--arcade-purple), var(--arcade-green));
+		background: linear-gradient(110deg, var(--arcade-primary), var(--arcade-secondary), var(--arcade-primary));
 		background-size: 220% 100%;
 		background-clip: text;
 		color: transparent;
@@ -415,11 +480,11 @@ const title = 'GitHub Contribution Battle Arena';
 
 	@keyframes neon-pulse {
 		from {
-			text-shadow: 0 0 4px var(--arcade-green), 0 0 10px rgb(95 237 131 / 52%);
+			text-shadow: 0 0 4px var(--arcade-primary), 0 0 10px rgb(var(--arcade-primary-rgb) / 52%);
 		}
 
 		to {
-			text-shadow: 0 0 8px var(--arcade-green), 0 0 24px rgb(95 237 131 / 92%);
+			text-shadow: 0 0 8px var(--arcade-primary), 0 0 24px rgb(var(--arcade-primary-rgb) / 92%);
 		}
 	}
 
@@ -443,13 +508,27 @@ const title = 'GitHub Contribution Battle Arena';
 
 	@keyframes loading-colors {
 		from {
-			color: var(--arcade-green);
-			text-shadow: 0 0 7px rgb(95 237 131 / 55%);
+			color: var(--arcade-primary);
+			text-shadow: 0 0 7px rgb(var(--arcade-primary-rgb) / 55%);
+		}
+
+		@keyframes error-shake {
+			0%, 100% {
+				transform: translateX(0);
+			}
+
+			20%, 60% {
+				transform: translateX(-5px);
+			}
+
+			40%, 80% {
+				transform: translateX(5px);
+			}
 		}
 
 		to {
-			color: #c49aff;
-			text-shadow: 0 0 9px rgb(138 43 226 / 75%);
+			color: var(--arcade-loading-end);
+			text-shadow: 0 0 9px rgb(var(--arcade-secondary-rgb) / 75%);
 		}
 	}
 
@@ -471,10 +550,32 @@ const title = 'GitHub Contribution Battle Arena';
 		}
 	}
 
-	@media (max-width: 640px) {
+	@media (max-width: 1024px) {
+		.results {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.results :global(.versus) {
+			justify-self: center;
+		}
+	}
+
+	@media (max-width: 768px) {
+		:global(body) {
+			font-size: 0.65rem;
+		}
+
 		.arena {
 			width: min(calc(100% - 2rem), 1200px);
 			padding: 2rem 0;
+		}
+
+		h1 {
+			font-size: clamp(1rem, 5vw, 1.6rem);
+		}
+
+		.intro > p:last-child {
+			font-size: 0.52rem;
 		}
 
 		form {
@@ -482,7 +583,7 @@ const title = 'GitHub Contribution Battle Arena';
 		}
 
 		.players {
-			grid-template-columns: 1fr;
+			grid-template-columns: minmax(0, 1fr);
 		}
 
 		.players .versus {
@@ -490,12 +591,31 @@ const title = 'GitHub Contribution Battle Arena';
 			padding: 0;
 		}
 
-		.results {
-			grid-template-columns: 1fr;
+		input {
+			font-size: 0.65rem;
+		}
+
+		:global(.player-card) {
+			padding: 1rem;
 		}
 
 		.results :global(.versus) {
 			justify-self: center;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.arena {
+			padding: 1.5rem 0;
+		}
+
+		form {
+			padding: 0.75rem;
+		}
+
+		button {
+			width: 100%;
+			min-width: 0;
 		}
 	}
 
@@ -535,13 +655,98 @@ const title = 'GitHub Contribution Battle Arena';
 	const playerOneInput = document.querySelector<HTMLInputElement>('#player-one');
 	const playerTwoInput = document.querySelector<HTMLInputElement>('#player-two');
 	const battleButton = document.querySelector<HTMLButtonElement>('#battle-button');
+	const themeToggle = document.querySelector<HTMLButtonElement>('#theme-toggle');
 	const battleStatus = document.querySelector<HTMLParagraphElement>('#battle-status');
+	const playerOneError = document.querySelector<HTMLParagraphElement>('#player-one-error');
+	const playerTwoError = document.querySelector<HTMLParagraphElement>('#player-two-error');
 	const results = document.querySelector<HTMLElement>('#results');
 	const dayTooltip = document.querySelector<HTMLDivElement>('#day-tooltip');
 
-	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !battleStatus || !results || !dayTooltip) {
+	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !themeToggle || !battleStatus
+		|| !playerOneError || !playerTwoError || !results || !dayTooltip) {
 		throw new Error('Battle page is missing required form elements.');
 	}
+
+	let validationActive = false;
+
+	themeToggle.addEventListener('click', () => {
+		const useBlueOrange = document.documentElement.dataset.theme !== 'blue-orange';
+		if (useBlueOrange) {
+			document.documentElement.dataset.theme = 'blue-orange';
+		} else {
+			delete document.documentElement.dataset.theme;
+		}
+
+		themeToggle.setAttribute('aria-pressed', String(useBlueOrange));
+		themeToggle.textContent = useBlueOrange
+			? 'Switch to green + purple'
+			: 'Switch to blue + orange';
+	});
+
+	function validateUsername(username: string): string | undefined {
+		if (!username) return 'Enter a GitHub username.';
+		if (username.length > 39 || !/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/.test(username)) {
+			return 'Use 1–39 letters or numbers, with single hyphens only between characters.';
+		}
+		return undefined;
+	}
+
+	function setFieldError(
+		input: HTMLInputElement,
+		errorElement: HTMLParagraphElement,
+		message: string | undefined,
+		animate = false,
+	): void {
+		const wrapper = input.closest<HTMLElement>('.username-input');
+		if (!wrapper) throw new Error(`Username field ${input.id} is missing its input wrapper.`);
+
+		wrapper.classList.toggle('is-invalid', Boolean(message));
+		errorElement.textContent = message ?? '';
+		errorElement.hidden = !message;
+
+		if (message) {
+			input.setAttribute('aria-invalid', 'true');
+			if (animate) triggerShake(wrapper);
+		} else {
+			input.removeAttribute('aria-invalid');
+			wrapper.classList.remove('shake');
+		}
+	}
+
+	function triggerShake(element: HTMLElement): void {
+		element.classList.remove('shake');
+		void element.offsetWidth;
+		element.classList.add('shake');
+	}
+
+	function updateValidationSummary(): void {
+		const errors = [
+			{ player: 'Player 1', message: validateUsername(playerOneInput.value.trim()) },
+			{ player: 'Player 2', message: validateUsername(playerTwoInput.value.trim()) },
+		];
+		setFieldError(playerOneInput, playerOneError, errors[0].message);
+		setFieldError(playerTwoInput, playerTwoError, errors[1].message);
+
+		const remainingErrors = errors
+			.filter((error): error is { player: string; message: string } => Boolean(error.message))
+			.map((error) => `${error.player}: ${error.message}`);
+
+		if (remainingErrors.length) {
+			battleStatus.textContent = remainingErrors.join(' ');
+			battleStatus.classList.add('is-error');
+		} else {
+			battleStatus.textContent = '';
+			battleStatus.classList.remove('is-error', 'shake');
+			validationActive = false;
+		}
+	}
+
+	playerOneInput.addEventListener('input', () => {
+		if (validationActive) updateValidationSummary();
+	});
+	playerTwoInput.addEventListener('input', () => {
+		if (validationActive) updateValidationSummary();
+	});
 
 	function isContributionData(value: unknown): value is ContributionData {
 		if (typeof value !== 'object' || value === null) return false;
@@ -700,18 +905,28 @@ const title = 'GitHub Contribution Battle Arena';
 	form.addEventListener('submit', async (event) => {
 		event.preventDefault();
 		const usernames = [playerOneInput.value.trim(), playerTwoInput.value.trim()];
-		playerOneInput.removeAttribute('aria-invalid');
-		playerTwoInput.removeAttribute('aria-invalid');
+		const playerOneMessage = validateUsername(usernames[0]);
+		const playerTwoMessage = validateUsername(usernames[1]);
+		setFieldError(playerOneInput, playerOneError, playerOneMessage, Boolean(playerOneMessage));
+		setFieldError(playerTwoInput, playerTwoError, playerTwoMessage, Boolean(playerTwoMessage));
 		results.replaceChildren();
 		results.hidden = true;
 
-		if (!usernames[0] || !usernames[1]) {
-			if (!usernames[0]) playerOneInput.setAttribute('aria-invalid', 'true');
-			if (!usernames[1]) playerTwoInput.setAttribute('aria-invalid', 'true');
-			battleStatus.textContent = 'Enter a GitHub username for both players to start.';
+		if (playerOneMessage || playerTwoMessage) {
+			validationActive = true;
+			const errors = [
+				playerOneMessage ? `Player 1: ${playerOneMessage}` : '',
+				playerTwoMessage ? `Player 2: ${playerTwoMessage}` : '',
+			].filter(Boolean);
+			battleStatus.textContent = errors.join(' ');
+			battleStatus.classList.remove('is-loading');
+			battleStatus.classList.add('is-error');
+			triggerShake(battleStatus);
 			return;
 		}
 
+		validationActive = false;
+		battleStatus.classList.remove('is-error', 'shake');
 		battleButton.disabled = true;
 		battleButton.textContent = 'Loading battle...';
 		battleStatus.classList.add('is-loading');
@@ -733,10 +948,13 @@ const title = 'GitHub Contribution Battle Arena';
 			);
 			results.hidden = false;
 			battleStatus.textContent = 'Battle results are ready. Compare the contribution totals and graphs below.';
+			battleStatus.classList.remove('is-error');
 		} catch (error) {
 			battleStatus.textContent = error instanceof Error
 				? error.message
 				: 'Could not load contribution data. Please try again.';
+			battleStatus.classList.add('is-error');
+			triggerShake(battleStatus);
 		} finally {
 			battleStatus.classList.remove('is-loading');
 			battleButton.disabled = false;
