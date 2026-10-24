@@ -19,8 +19,10 @@ Before writing any code, let's use Copilot's planning workflows to think through
    ```
    I need to build a server-side API proxy that fetches GitHub contribution data
    for any username. The endpoint is https://github.com/{username}.contribs which
-   returns JSON. We need to bypass CORS restrictions. Plan the implementation
-   including the route structure, error handling, and caching strategy.
+   returns JSON. The browser should call our API same-origin only. Plan the
+   implementation including the route structure, error handling, and a shared
+   Redis cache with a five-minute TTL. If Redis is unavailable, fetch upstream
+   without caching.
    ```
 
 3. **Review the plan** — this is where planning shines. Don't just accept the first response:
@@ -55,6 +57,10 @@ Before writing any code, let's use Copilot's planning workflows to think through
 
 2. You should see JSON with contribution data returned.
 3. Test the error case too — try an invalid username and confirm it returns an appropriate error response.
+
+The API route is `GET /api/contributions/:username`. It validates GitHub-style usernames and returns the upstream JSON on success. Errors use a JSON object with an `error` field containing a code and message (`400` invalid username, `403` disallowed origin, `404` user not found, `502` upstream failure, or `504` timeout). Browser requests are same-origin only; command-line requests without an `Origin` header are allowed.
+
+The shared cache uses Redis when `REDIS_URL` is configured and keeps successful responses for five minutes. If Redis is not configured or cannot be reached, the route logs the cache issue and fetches fresh data without caching. CORS controls browser access, not direct access from command-line or server clients.
 
 ## Task 3: Plan the Battle Page
 

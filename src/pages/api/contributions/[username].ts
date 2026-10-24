@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
+import { contributionCache } from '../../../lib/contribution-cache';
+import { handleContributionRequest } from '../../../lib/contribution-proxy';
 
 export const prerender = false;
 
-// TODO: Implement the GET handler for fetching GitHub contribution data
-// Endpoint: https://github.com/{username}.contribs
-export const GET: APIRoute = async ({ params: _params }) => {
-	return new Response(JSON.stringify({ error: 'Not implemented' }), {
-		status: 501,
-		headers: { 'Content-Type': 'application/json' },
+export const GET: APIRoute = async ({ params, request }) => {
+	return handleContributionRequest({
+		request,
+		username: params.username,
+		cache: contributionCache,
 	});
 };
