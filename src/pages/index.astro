@@ -285,7 +285,7 @@ const title = 'GitHub Contribution Battle Arena';
 	}
 </style>
 
-<script lang="ts">
+<script>
 	interface ContributionDay {
 		count: number;
 		level: number;
@@ -305,12 +305,6 @@ const title = 'GitHub Contribution Battle Arena';
 		weeks: ContributionWeek[];
 	}
 
-	interface ApiError {
-		error?: {
-			message?: string;
-		};
-	}
-
 	const form = document.querySelector<HTMLFormElement>('#battle-form');
 	const playerOneInput = document.querySelector<HTMLInputElement>('#player-one');
 	const playerTwoInput = document.querySelector<HTMLInputElement>('#player-two');
@@ -327,16 +321,38 @@ const title = 'GitHub Contribution Battle Arena';
 
 		const data = value as Partial<ContributionData>;
 		return typeof data.from === 'string'
+			&& !Number.isNaN(Date.parse(`${data.from}T00:00:00Z`))
 			&& typeof data.to === 'string'
+			&& !Number.isNaN(Date.parse(`${data.to}T00:00:00Z`))
 			&& typeof data.total_contributions === 'number'
+			&& Number.isInteger(data.total_contributions)
+			&& data.total_contributions >= 0
 			&& Array.isArray(data.colors_full)
-			&& data.colors_full.every((color) => typeof color === 'string')
+			&& data.colors_full.length > 0
+			&& data.colors_full.every((color) => typeof color === 'string' && /^#[\da-f]{6}$/i.test(color))
 			&& Array.isArray(data.weeks)
 			&& data.weeks.every((week) => typeof week.first_day === 'string'
+				&& !Number.isNaN(Date.parse(`${week.first_day}T00:00:00Z`))
 				&& Array.isArray(week.contribution_days)
 				&& week.contribution_days.every((day) => typeof day.count === 'number'
-					&& typeof day.level === 'number'
-					&& typeof day.weekday === 'number'));
+					&& Number.isInteger(day.count)
+					&& day.count >= 0
+					&& Number.isInteger(day.level)
+					&& day.level >= 0
+					&& day.level < data.colors_full.length
+					&& Number.isInteger(day.weekday)
+					&& day.weekday >= 0
+					&& day.weekday <= 6));
+	}
+
+	function getApiErrorMessage(value: unknown): string | undefined {
+		if (typeof value !== 'object' || value === null || !('error' in value)) return undefined;
+
+		const apiError = (value as { error?: unknown }).error;
+		if (typeof apiError !== 'object' || apiError === null || !('message' in apiError)) return undefined;
+
+		const message = (apiError as { message?: unknown }).message;
+		return typeof message === 'string' ? message : undefined;
 	}
 
 	async function fetchContributions(username: string): Promise<ContributionData> {
@@ -344,8 +360,7 @@ const title = 'GitHub Contribution Battle Arena';
 		const body: unknown = await response.json();
 
 		if (!response.ok) {
-			const apiError = body as ApiError;
-			throw new Error(apiError.error?.message ?? `Could not load contributions for @${username}.`);
+			throw new Error(getApiErrorMessage(body) ?? `Could not load contributions for @${username}.`);
 		}
 
 		if (!isContributionData(body)) {
