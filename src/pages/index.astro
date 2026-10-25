@@ -585,6 +585,26 @@ const title = 'GitHub Contribution Battle Arena';
 		width: max-content;
 	}
 
+	:global(.graph-legend) {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.25rem;
+		margin-top: 0.65rem;
+		color: var(--arcade-muted);
+		font-family: system-ui, sans-serif;
+		font-size: 0.7rem;
+		line-height: 1;
+	}
+
+	:global(.legend-swatch) {
+		width: 0.62rem;
+		height: 0.62rem;
+		flex: 0 0 auto;
+		border: 1px solid rgb(255 255 255 / 12%);
+		border-radius: 1px;
+	}
+
 	:global(.day) {
 		position: relative;
 		width: 0.62rem;
@@ -1312,6 +1332,27 @@ const title = 'GitHub Contribution Battle Arena';
 		}
 
 		graphWrap.append(graph);
+
+		const legend = document.createElement('div');
+		legend.className = 'graph-legend';
+		legend.setAttribute('role', 'img');
+		legend.setAttribute('aria-label', 'Contribution levels: Less to More');
+
+		const lessLabel = document.createElement('span');
+		lessLabel.textContent = 'Less';
+		legend.append(lessLabel);
+		for (const color of data.colors_full) {
+			const swatch = document.createElement('span');
+			swatch.className = 'legend-swatch';
+			swatch.style.backgroundColor = color;
+			swatch.setAttribute('aria-hidden', 'true');
+			legend.append(swatch);
+		}
+		const moreLabel = document.createElement('span');
+		moreLabel.textContent = 'More';
+		legend.append(moreLabel);
+
+		graphWrap.append(legend);
 		card.append(graphWrap);
 
 		const streak = document.createElement('p');
