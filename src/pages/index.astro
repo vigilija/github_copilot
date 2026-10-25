@@ -377,6 +377,27 @@ const title = 'GitHub Contribution Battle Arena';
 		display: none;
 	}
 
+	.share-actions {
+		grid-column: 1 / -1;
+		text-align: center;
+	}
+
+	.share-results {
+		margin: 0 auto;
+	}
+
+	.share-confirmation {
+		min-height: 1.5em;
+		margin: 0.5rem 0 0;
+		color: var(--arcade-primary);
+		font-size: 0.48rem;
+		text-shadow: 0 0 8px rgb(var(--arcade-primary-rgb) / 48%);
+	}
+
+	.share-confirmation:empty {
+		display: none;
+	}
+
 	:global(.countdown-overlay) {
 		position: fixed;
 		z-index: 20;
@@ -1508,6 +1529,48 @@ const title = 'GitHub Contribution Battle Arena';
 				}),
 				renderPlayer(usernames[1], playerTwoData),
 			);
+
+			const shareActions = document.createElement('div');
+			shareActions.className = 'share-actions';
+			const shareButton = document.createElement('button');
+			shareButton.className = 'share-results';
+			shareButton.type = 'button';
+			shareButton.textContent = '📋 Share Results';
+
+			const shareConfirmation = document.createElement('p');
+			shareConfirmation.className = 'share-confirmation';
+			shareConfirmation.setAttribute('role', 'status');
+			shareConfirmation.setAttribute('aria-live', 'polite');
+			let confirmationTimeout: number | undefined;
+			shareButton.addEventListener('click', async () => {
+				const summary = [
+					'GitHub Contribution Battle',
+					`${usernames[0]}: ${playerOneData.total_contributions.toLocaleString()} contributions`,
+					`${usernames[1]}: ${playerTwoData.total_contributions.toLocaleString()} contributions`,
+					winner === null ? "It's a tie!" : `Winner: ${winner}`,
+				].join('\n');
+
+				shareButton.disabled = true;
+				try {
+					await navigator.clipboard.writeText(summary);
+					shareConfirmation.textContent = 'Copied to clipboard!';
+					if (confirmationTimeout !== undefined) window.clearTimeout(confirmationTimeout);
+					confirmationTimeout = window.setTimeout(() => {
+						shareConfirmation.textContent = '';
+						confirmationTimeout = undefined;
+					}, 2_000);
+				} catch (error) {
+					playSound('explosion');
+					battleStatus.textContent = error instanceof Error
+						? `Could not copy battle results: ${error.message}`
+						: 'Could not copy battle results to the clipboard.';
+					battleStatus.classList.add('is-error');
+				} finally {
+					shareButton.disabled = false;
+				}
+			});
+			shareActions.append(shareButton, shareConfirmation);
+			results.append(shareActions);
 			results.hidden = false;
 			void results.offsetWidth;
 			results.classList.add('results-enter');
