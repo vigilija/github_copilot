@@ -75,6 +75,15 @@ const title = 'GitHub Contribution Battle Arena';
 			</form>
 
 			<section id="results" class="results" aria-label="Battle results" hidden></section>
+			<section class="history" aria-labelledby="history-heading">
+				<header class="history-header">
+					<h2 id="history-heading">Recent Battles</h2>
+					<button id="clear-history" class="clear-history" type="button" disabled>Clear History</button>
+				</header>
+				<ol id="history-list" class="history-list" aria-live="polite">
+					<li class="history-empty">No battles yet. Start a battle to build your history.</li>
+				</ol>
+			</section>
 			<div id="day-tooltip" class="day-tooltip" role="tooltip" hidden></div>
 		</main>
 	</body>
@@ -356,6 +365,76 @@ const title = 'GitHub Contribution Battle Arena';
 
 	.results[hidden] {
 		display: none;
+	}
+
+	.history {
+		margin-top: 2rem;
+		padding: 1.25rem;
+		border: 1px solid rgb(var(--arcade-secondary-rgb) / 65%);
+		border-radius: 0.35rem;
+		background: linear-gradient(145deg, rgb(23 23 47 / 96%), rgb(12 12 29 / 96%));
+		box-shadow: 0 0 16px rgb(var(--arcade-secondary-rgb) / 14%);
+	}
+
+	.history-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.history-header h2 {
+		margin: 0;
+		color: var(--arcade-primary);
+		font-size: 0.75rem;
+		line-height: 1.8;
+		text-shadow: 0 0 8px rgb(var(--arcade-primary-rgb) / 48%);
+	}
+
+	.clear-history {
+		min-width: 0;
+		min-height: 44px;
+		margin: 0;
+		padding: 0.65rem 0.8rem;
+		font-size: 0.45rem;
+	}
+
+	.history-list {
+		display: grid;
+		gap: 0.65rem;
+		margin: 1rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.history-entry,
+	.history-empty {
+		padding: 0.85rem;
+		border: 1px solid rgb(var(--arcade-primary-rgb) / 22%);
+		border-radius: 0.25rem;
+		background: rgb(8 8 23 / 70%);
+		color: var(--arcade-muted);
+		font-size: 0.48rem;
+		line-height: 1.9;
+	}
+
+	.history-players {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1.25rem;
+		color: var(--arcade-text);
+		overflow-wrap: anywhere;
+	}
+
+	.history-result {
+		margin: 0.3rem 0 0;
+		color: var(--arcade-primary);
+	}
+
+	.history-date {
+		display: block;
+		margin-top: 0.2rem;
+		color: var(--arcade-muted);
 	}
 
 	:global(.champion-banner) {
@@ -656,6 +735,15 @@ const title = 'GitHub Contribution Battle Arena';
 			grid-template-columns: minmax(0, 1fr);
 		}
 
+		.history {
+			padding: 1rem;
+		}
+
+		.history-header {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+
 		.players .versus {
 			justify-self: center;
 			padding: 0;
@@ -686,6 +774,11 @@ const title = 'GitHub Contribution Battle Arena';
 		button {
 			width: 100%;
 			min-width: 0;
+		}
+
+		.clear-history {
+			width: auto;
+			align-self: stretch;
 		}
 	}
 
@@ -721,6 +814,13 @@ const title = 'GitHub Contribution Battle Arena';
 		weeks: ContributionWeek[];
 	}
 
+	interface BattleHistoryEntry {
+		playerOne: { username: string; totalContributions: number };
+		playerTwo: { username: string; totalContributions: number };
+		winner: string | null;
+		happenedAt: string;
+	}
+
 	const form = document.querySelector<HTMLFormElement>('#battle-form');
 	const playerOneInput = document.querySelector<HTMLInputElement>('#player-one');
 	const playerTwoInput = document.querySelector<HTMLInputElement>('#player-two');
@@ -730,14 +830,19 @@ const title = 'GitHub Contribution Battle Arena';
 	const playerOneError = document.querySelector<HTMLParagraphElement>('#player-one-error');
 	const playerTwoError = document.querySelector<HTMLParagraphElement>('#player-two-error');
 	const results = document.querySelector<HTMLElement>('#results');
+	const historyList = document.querySelector<HTMLOListElement>('#history-list');
+	const clearHistoryButton = document.querySelector<HTMLButtonElement>('#clear-history');
 	const dayTooltip = document.querySelector<HTMLDivElement>('#day-tooltip');
 
 	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !themeToggle || !battleStatus
-		|| !playerOneError || !playerTwoError || !results || !dayTooltip) {
+		|| !playerOneError || !playerTwoError || !results || !historyList || !clearHistoryButton || !dayTooltip) {
 		throw new Error('Battle page is missing required form elements.');
 	}
 
+	const historyStorageKey = 'mona-mayhem:recent-battles';
+	const maxHistoryEntries = 10;
 	let validationActive = false;
+	let battleHistory: BattleHistoryEntry[] = [];
 
 	themeToggle.addEventListener('click', () => {
 		const useBlueOrange = document.documentElement.dataset.theme !== 'blue-orange';
@@ -759,6 +864,84 @@ const title = 'GitHub Contribution Battle Arena';
 			return 'Use 1-39 letters or numbers, with single hyphens only between characters.';
 		}
 		return undefined;
+	}
+
+	function isBattleHistoryEntry(value: unknown): value is BattleHistoryEntry {
+		if (typeof value !== 'object' || value === null) return false;
+		const entry = value as Partial<BattleHistoryEntry>;
+		const isPlayer = (player: unknown): player is BattleHistoryEntry['playerOne'] => {
+			if (typeof player !== 'object' || player === null) return false;
+			const candidate = player as Partial<BattleHistoryEntry['playerOne']>;
+			return typeof candidate.username === 'string'
+				&& validateUsername(candidate.username) === undefined
+				&& typeof candidate.totalContributions === 'number'
+				&& Number.isInteger(candidate.totalContributions)
+				&& candidate.totalContributions >= 0;
+		};
+
+		return isPlayer(entry.playerOne)
+			&& isPlayer(entry.playerTwo)
+			&& (entry.winner === null
+				|| (typeof entry.winner === 'string'
+					&& (entry.winner === entry.playerOne.username || entry.winner === entry.playerTwo.username)))
+			&& typeof entry.happenedAt === 'string'
+			&& !Number.isNaN(Date.parse(entry.happenedAt))
+			&& (entry.playerOne.totalContributions === entry.playerTwo.totalContributions
+				? entry.winner === null
+				: entry.winner === (entry.playerOne.totalContributions > entry.playerTwo.totalContributions
+					? entry.playerOne.username
+					: entry.playerTwo.username));
+	}
+
+	function readBattleHistory(): BattleHistoryEntry[] {
+		const storedHistory = localStorage.getItem(historyStorageKey);
+		if (storedHistory === null) return [];
+
+		const parsed: unknown = JSON.parse(storedHistory);
+		if (!Array.isArray(parsed) || !parsed.every(isBattleHistoryEntry)) {
+			throw new Error('Saved battle history is invalid. Clear history to start fresh.');
+		}
+		return parsed.slice(0, maxHistoryEntries);
+	}
+
+	function renderBattleHistory(): void {
+		historyList.replaceChildren();
+		clearHistoryButton.disabled = battleHistory.length === 0;
+		if (battleHistory.length === 0) {
+			const empty = document.createElement('li');
+			empty.className = 'history-empty';
+			empty.textContent = 'No battles yet. Start a battle to build your history.';
+			historyList.append(empty);
+			return;
+		}
+
+		for (const entry of battleHistory) {
+			const item = document.createElement('li');
+			item.className = 'history-entry';
+
+			const players = document.createElement('div');
+			players.className = 'history-players';
+			for (const player of [entry.playerOne, entry.playerTwo]) {
+				const playerTotal = document.createElement('span');
+				playerTotal.textContent = `@${player.username}: ${player.totalContributions.toLocaleString()}`;
+				players.append(playerTotal);
+			}
+
+			const result = document.createElement('p');
+			result.className = 'history-result';
+			result.textContent = entry.winner === null ? "Result: It's a tie" : `Winner: @${entry.winner}`;
+
+			const date = document.createElement('time');
+			date.className = 'history-date';
+			date.dateTime = entry.happenedAt;
+			date.textContent = new Intl.DateTimeFormat(undefined, {
+				dateStyle: 'medium',
+				timeStyle: 'short',
+			}).format(new Date(entry.happenedAt));
+
+			item.append(players, result, date);
+			historyList.append(item);
+		}
 	}
 
 	function setFieldError(
@@ -991,6 +1174,32 @@ const title = 'GitHub Contribution Battle Arena';
 		results.querySelector('[aria-describedby="day-tooltip"]')?.removeAttribute('aria-describedby');
 	}
 
+	try {
+		battleHistory = readBattleHistory();
+		renderBattleHistory();
+	} catch (error) {
+		battleStatus.textContent = error instanceof Error
+			? `Could not load recent battles: ${error.message}`
+			: 'Could not load recent battles from local storage.';
+		battleStatus.classList.add('is-error');
+		clearHistoryButton.disabled = false;
+	}
+
+	clearHistoryButton.addEventListener('click', () => {
+		try {
+			localStorage.removeItem(historyStorageKey);
+			battleHistory = [];
+			renderBattleHistory();
+			battleStatus.textContent = 'Battle history cleared.';
+			battleStatus.classList.remove('is-error');
+		} catch (error) {
+			battleStatus.textContent = error instanceof Error
+				? `Could not clear battle history: ${error.message}`
+				: 'Could not clear battle history from local storage.';
+			battleStatus.classList.add('is-error');
+		}
+	});
+
 	results.addEventListener('pointerover', (event) => {
 		const target = event.target;
 		if (target instanceof Element) {
@@ -1043,16 +1252,25 @@ const title = 'GitHub Contribution Battle Arena';
 				fetchContributions(usernames[1]),
 			]);
 
+			const winner = playerOneData.total_contributions === playerTwoData.total_contributions
+				? null
+				: playerOneData.total_contributions > playerTwoData.total_contributions
+					? usernames[0]
+					: usernames[1];
+			const historyEntry: BattleHistoryEntry = {
+				playerOne: { username: usernames[0], totalContributions: playerOneData.total_contributions },
+				playerTwo: { username: usernames[1], totalContributions: playerTwoData.total_contributions },
+				winner,
+				happenedAt: new Date().toISOString(),
+			};
+
 			const champion = document.createElement('p');
 			champion.className = 'champion-banner';
 			champion.setAttribute('role', 'status');
 			champion.setAttribute('aria-live', 'polite');
-			if (playerOneData.total_contributions === playerTwoData.total_contributions) {
+			if (winner === null) {
 				champion.textContent = `🤝 ${usernames[0]} & ${usernames[1]} IT'S A TIE! 🤝`;
 			} else {
-				const winner = playerOneData.total_contributions > playerTwoData.total_contributions
-					? usernames[0]
-					: usernames[1];
 				champion.textContent = `🏆 ${winner} WINS! 🏆`;
 			}
 
@@ -1066,6 +1284,18 @@ const title = 'GitHub Contribution Battle Arena';
 				renderPlayer(usernames[1], playerTwoData),
 			);
 			results.hidden = false;
+			const updatedHistory = [historyEntry, ...battleHistory].slice(0, maxHistoryEntries);
+			try {
+				localStorage.setItem(historyStorageKey, JSON.stringify(updatedHistory));
+			} catch (error) {
+				battleStatus.textContent = error instanceof Error
+					? `Battle results are ready, but could not save history: ${error.message}`
+					: 'Battle results are ready, but could not save history to local storage.';
+				battleStatus.classList.add('is-error');
+				return;
+			}
+			battleHistory = updatedHistory;
+			renderBattleHistory();
 			battleStatus.textContent = 'Battle results are ready. Compare the contribution totals and graphs below.';
 			battleStatus.classList.remove('is-error');
 		} catch (error) {
