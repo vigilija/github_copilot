@@ -442,6 +442,15 @@ const title = 'GitHub Contribution Battle Arena';
 		font-size: 0.48rem;
 	}
 
+	:global(.streak) {
+		position: relative;
+		z-index: 1;
+		margin: 0.75rem 0 0;
+		color: var(--arcade-primary);
+		font-size: 0.52rem;
+		text-shadow: 0 0 8px rgb(var(--arcade-primary-rgb) / 48%);
+	}
+
 	:global(.graph-wrap) {
 		position: relative;
 		z-index: 1;
@@ -872,6 +881,36 @@ const title = 'GitHub Contribution Battle Arena';
 		}).format(new Date(`${date}T00:00:00Z`));
 	}
 
+	function getLongestContributionStreak(data: ContributionData): number {
+		const contributionDates = new Set<number>();
+		for (const week of data.weeks) {
+			const firstDay = new Date(`${week.first_day}T00:00:00Z`);
+			for (const day of week.contribution_days) {
+				if (day.count === 0) continue;
+
+				const date = new Date(firstDay);
+				date.setUTCDate(date.getUTCDate() + day.weekday);
+				contributionDates.add(date.getTime());
+			}
+		}
+
+		const sortedDates = [...contributionDates].sort((a, b) => a - b);
+		let longestStreak = 0;
+		let currentStreak = 0;
+		let previousDate: number | undefined;
+		const oneDay = 24 * 60 * 60 * 1000;
+
+		for (const date of sortedDates) {
+			currentStreak = previousDate !== undefined && date - previousDate === oneDay
+				? currentStreak + 1
+				: 1;
+			longestStreak = Math.max(longestStreak, currentStreak);
+			previousDate = date;
+		}
+
+		return longestStreak;
+	}
+
 	function renderPlayer(username: string, data: ContributionData): HTMLElement {
 		const card = document.createElement('article');
 		card.className = 'player-card';
@@ -917,6 +956,11 @@ const title = 'GitHub Contribution Battle Arena';
 
 		graphWrap.append(graph);
 		card.append(graphWrap);
+
+		const streak = document.createElement('p');
+		streak.className = 'streak';
+		streak.textContent = `🔥 Longest Streak: ${getLongestContributionStreak(data)} days`;
+		card.append(streak);
 		return card;
 	}
 
