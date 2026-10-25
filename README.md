@@ -71,6 +71,8 @@ Choose the workflow that suits you: stay in **VS Code**, or take the workshop to
 
 The current [GitHub Pages workflow](.github/workflows/deploy.yml) publishes the static workshop and documentation from `docs/` and `workshop/`. It does **not** build or deploy the Astro app in `src/`.
 
+Before the first deployment, enable GitHub Pages for the repository under **Settings → Pages** and set **Build and deployment → Source** to **GitHub Actions**. The workflow cannot enable Pages automatically with the default `GITHUB_TOKEN`.
+
 To deploy the app on GitHub Pages, switch Astro to static output, remove the Node adapter, and update the workflow to build and publish `dist/`. For production API routes, use a server platform such as Vercel, Netlify, or a Node.js host.
 </details>
 
