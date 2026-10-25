@@ -2,7 +2,7 @@
 
 ---
 
-코드를 작성하기 전에 Copilot의 계획 워크플로를 활용해 아키텍처를 구상합니다. 먼저 계획하면 더 나은 시스템을 설계하고 Copilot이 고품질 코드를 생성하는 데 필요한 맥락을 제공할 수 있습니다.
+코드를 작성하기 전에 Copilot의 계획 워크플로를 사용해 아키텍처를 구상합니다. 먼저 계획하면 더 나은 시스템을 설계하고 Copilot이 고품질 코드를 생성하는 데 필요한 맥락을 제공할 수 있습니다.
 
 ## 작업 1: API 아키텍처 계획
 
@@ -17,11 +17,12 @@
 2. 다음 프롬프트를 입력합니다.
 
    ```
-   사용자 이름을 입력하면 GitHub 기여도 데이터를 가져오는 서버 측 API 프록시를 만들려고 합니다.
-   엔드포인트는 다음 주소입니다. 이 엔드포인트는 JSON을 반환합니다.
-   https://github.com/{username}.contribs
-   CORS 제한을 우회해야 합니다. 라우트 구조, 오류 처리, 캐싱 전략을 포함한
-   구현 계획을 세워 주세요.
+   I need to build a server-side API proxy that fetches GitHub contribution data
+   for any username. The endpoint is https://github.com/{username}.contribs which
+   returns JSON. The browser should call our API same-origin only. Plan the
+   implementation including the route structure, error handling, and a shared
+   Redis cache with a five-minute TTL. If Redis is unavailable, fetch upstream
+   without caching.
    ```
 
 3. **계획을 검토합니다.** 계획 수립의 장점이 드러나는 단계입니다. 첫 응답을 그대로 수락하지 마십시오.
@@ -57,6 +58,10 @@
 2. 기여도 데이터가 포함된 JSON 응답을 확인합니다.
 3. 잘못된 사용자 이름을 입력해 오류 상황도 테스트하고 적절한 오류 응답이 반환되는지 확인합니다.
 
+API 라우트는 `GET /api/contributions/:username`입니다. GitHub 사용자 이름 형식에 맞는지 검증하고, 성공하면 upstream JSON을 반환합니다. 오류 응답은 코드와 메시지를 포함하는 `error` 필드가 있는 JSON 객체입니다(`400` 잘못된 사용자 이름, `403` 허용되지 않은 출처, `404` 사용자를 찾을 수 없음, `502` upstream 오류, `504` 시간 초과). 브라우저 요청은 같은 출처에서만 허용합니다. `Origin` 헤더가 없는 명령줄 요청은 허용됩니다.
+
+`REDIS_URL`이 설정되어 있으면 공유 캐시가 Redis를 사용하며 성공한 응답을 5분 동안 보관합니다. Redis가 설정되지 않았거나 연결할 수 없으면 라우트가 캐시 문제를 기록하고 캐싱 없이 upstream에서 최신 데이터를 가져옵니다. CORS는 브라우저 액세스를 제어하며 명령줄이나 서버 클라이언트의 직접 액세스는 제어하지 않습니다.
+
 ## 작업 3: 배틀 페이지 계획
 
 <!-- track:vscode:start -->
@@ -68,10 +73,11 @@
 <!-- track:cli:end -->
 
    ```
-   이제 메인 페이지를 만들려고 합니다. "Mona Mayhem - GitHub Contribution Battle Arena"의 배틀 페이지를 계획해 주세요.
-   플레이어 1과 플레이어 2의 사용자 이름 입력란, 배틀 버튼, 결과 영역이 필요합니다.
-   UI는 단순하게 유지하고, 이 단계에서는 레이아웃이나 스타일을 지나치게 복잡하게 만들지 마세요.
-   HTML 구조, 기본 스타일, 배틀 상호작용 방식을 계획해 주세요.
+   Now I need the main page. Plan a battle page for "Mona Mayhem - GitHub
+   Contribution Battle Arena" with: two username inputs (Player 1 and Player 2),
+   a battle button, and a results area. Keep the UI simple — don't over-engineer
+   the layout or styling at this stage. Plan the HTML structure, basic styling,
+   and how the battle interaction will work.
    ```
 
 2. **계획을 검토하고 반복해서 다듬습니다.** 질문을 하고, 변경을 제안하고, 접근 방식을 개선합니다.
@@ -89,10 +95,10 @@
 
 > **⚠️ 변경 사항이 보이지 않나요?** 페이지가 올바르게 표시되지 않거나 업데이트되지 않았다면 개발 서버를 중지(`Ctrl+C`)하고 `npm run dev`로 다시 시작한 다음 브라우저를 새로 고칩니다.
 
-1. 브라우저에서 다음 주소를 엽니다: http://localhost:4321
+1. 브라우저에서 http://localhost:4321을 엽니다.
 2. 다음 항목이 표시되어야 합니다.
    - 게임 제목
-   - 사용자 이름 입력란 2개(플레이어 1 및 플레이어 2)
+   - 사용자 이름 입력란 2개(Player 1 및 Player 2)
    - 배틀 버튼
 3. 버튼은 아직 작동하지 않습니다. 상호작용 로직을 연결하는 작업은 다음 단계에서 진행하므로 정상입니다.
 

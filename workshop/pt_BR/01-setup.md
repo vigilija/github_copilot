@@ -120,22 +120,25 @@ Vamos usar o comando integrado `/init` para gerar um arquivo de instruções do 
 
 ### Tarefa 2: Agentes em Segundo Plano
 
-**Agente em segundo plano local:**
+**Agente local em segundo plano:**
 
-1. No painel de Chat, clique em **+** → **New background agent**
-2. Digite o prompt:
+1. No painel de Chat, clique em **+** para iniciar um novo chat.
+2. Na parte inferior da janela, mude **Local** para **Copilot CLI**.
+3. Digite o prompt:
 
    > "Add linting rules for unused vars and improve code style; fix any errors"
 
-3. Quando terminar, **Revise e Aplique** as alterações, depois delete a sessão.
+4. Quando terminar, **Revise e aplique** as alterações e, se quiser, arquive a sessão.
 
 **Agente na nuvem:**
 
-1. Inicie outro agente em segundo plano com:
+1. No painel de Chat, clique em **+** para iniciar outro chat.
+2. Na parte inferior da janela, mude **Local** para **Cloud**.
+3. Digite este prompt:
 
    > "Make the README more engaging as a landing page"
 
-> **Resultado:** Regras de linting adicionadas, erros corrigidos, README melhorado — tudo sem sair do seu editor.
+> **Resultado:** Regras de lint adicionadas, erros corrigidos e README melhorado — tudo sem sair do editor.
 
 ### Tarefa 3: Explore o Projeto
 

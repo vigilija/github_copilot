@@ -109,7 +109,7 @@ Copilot용 워크스페이스 지침 파일을 만들기 위해 기본 제공 `/
 1. **Copilot Chat**을 열고 다음을 입력합니다.
 
    ```
-   /init 프로젝트 개요, 빌드/개발 명령, Astro 모범 사례를 포함하는 간단한 지침을 작성합니다(워크숍은 무시).
+   /init simple instructions with a project overview, build/dev commands, and Astro best practices, (ignore the workshop).
    ```
 
 2. 생성된 파일을 확인합니다. Copilot이 프로젝트를 분석하고 `.github/copilot-instructions.md`를 만듭니다.
@@ -157,7 +157,7 @@ Copilot용 워크스페이스 지침 파일을 만들기 위해 기본 제공 `/
 1. Copilot CLI에 다음을 입력합니다.
 
    ```
-   /init 프로젝트 개요, 빌드/개발 명령, Astro 모범 사례를 포함하는 간단한 지침을 작성합니다(워크숍은 무시).
+   /init simple instructions with a project overview, build/dev commands, and Astro best practices, (ignore the workshop).
    ```
 
 2. 생성된 파일을 확인합니다. Copilot이 프로젝트를 분석하고 `.github/copilot-instructions.md`를 만듭니다.

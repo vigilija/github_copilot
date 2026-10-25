@@ -2,31 +2,35 @@
 
 # 🎮 Mona Mayhem
 
-**VS Code 및 GitHub Copilot CLI 워크숍** — GitHub 기여도 배틀 아레나 만들기
+**GitHub 기여 그래프를 아케이드 대결로 바꿔 보세요.**
 
-두 사용자의 GitHub 기여 그래프를 비교하는 레트로 아케이드 스타일 웹사이트를 Astro로 만드는 워크숍 템플릿입니다. 이 저장소는 **시작점**이며, GitHub Copilot을 사용해 단계별로 앱을 완성합니다.
+GitHub Copilot과 함께 워크숍을 한 단계씩 진행하며 레트로 스타일의 배틀 아레나를 만듭니다.
+
+Mona Mayhem은 재미있는 레트로 아케이드 환경에서 두 GitHub 사용자의 기여 활동을 비교하는 웹 앱을 만드는 실습형 워크숍입니다. 이 프로젝트 템플릿에서 시작해 Copilot과 함께 경험을 계획하고, 구현하고, 스타일을 다듬고, 개선합니다.
+
+선호하는 작업 흐름을 선택하세요. **VS Code**에서 계속 작업하거나 **GitHub Copilot CLI**로 워크숍을 진행할 수 있습니다.
 
 ![Mona Mayhem 스크린샷](https://github.com/user-attachments/assets/5eca79e2-cb9f-4e93-aa0d-23666ebde3b7)
 *워크숍을 마치면 만들 수 있는 결과물*
 
-## 📚 워크숍
+## 📚 워크숍 트랙
 
 워크숍은 두 가지 트랙을 제공합니다. 선호하는 작업 방식에 맞는 트랙을 선택하십시오.
 
 - **VS Code 트랙** — 편집기 안에서 채팅(Chat), 계획 모드(Plan Mode), 에이전트 모드(Agent Mode), 백그라운드 에이전트(Background agents), 편집기 내 검토 흐름을 실습합니다.
 - **CLI 트랙** — 터미널에서 `copilot`, `@file` 컨텍스트, `/plan`, 자율 편집, `/fleet`, `/delegate`, `/review`를 실습합니다.
 
-| 파트 | 제목 | Copilot 중점 기능 |
+| 파트 | 워크숍 | 실습 내용 |
 |------|-------|------------------|
-| [00](workshop/ko/00-overview.md) | 개요 | 트랙 선택 및 학습 목표 |
-| [01](workshop/ko/01-setup.md) | 설정 및 컨텍스트 엔지니어링(Context Engineering) | 지침, 권한, 환경 설정 |
-| [02](workshop/ko/02-plan-and-scaffold.md) | 계획 및 스캐폴딩(Scaffolding) | API 및 페이지 아키텍처 계획 |
-| [03](workshop/ko/03-agent-mode.md) | 게임 구현 | 에이전트 기반 구현(Agentic implementation) 및 반복 개선 |
-| [04](workshop/ko/04-design-vibes.md) | 디자인 우선 테마 구성 | 시각 디자인 계획 및 구현 |
-| [05](workshop/ko/05-polish.md) | 다듬기 및 병렬 작업 | 병렬 처리, 검토, 품질 개선 |
-| [06](workshop/ko/06-bonus.md) | 보너스 및 확장 기능 | 자유 과제 및 추가 실험 |
+| [00](workshop/ko/00-overview.md) | 개요 | 트랙을 선택하고 목표를 정합니다 |
+| [01](workshop/ko/01-setup.md) | 설정 및 컨텍스트 엔지니어링(Context Engineering) | 환경을 준비하고 Copilot에 유용한 컨텍스트를 제공합니다 |
+| [02](workshop/ko/02-plan-and-scaffold.md) | 계획 및 스캐폴딩(Scaffolding) | API와 페이지 아키텍처를 계획합니다 |
+| [03](workshop/ko/03-agent-mode.md) | 게임 구현 | Copilot과 함께 배틀 경험을 구현합니다 |
+| [04](workshop/ko/04-design-vibes.md) | 디자인 우선 테마 구성 | 앱에 레트로 아케이드 스타일을 적용합니다 |
+| [05](workshop/ko/05-polish.md) | 다듬기 및 병렬 작업 | 병렬 워크플로와 검토를 통해 품질을 개선합니다 |
+| [06](workshop/ko/06-bonus.md) | 보너스 및 확장 기능 | 추가 기능과 실험을 살펴봅니다 |
 
-## 🚀 빠른 시작
+## 🚀 시작하기
 
 1. 먼저 다음 방법 중 하나로 저장소를 만듭니다.
    - **Use this template**을 클릭해 새 저장소를 만들거나
@@ -57,7 +61,7 @@
 
 ## 기술 스택
 
-- **프레임워크:** [Astro](https://astro.build/) v6
+- **프레임워크:** [Astro](https://astro.build/) 7
 - **런타임:** [@astrojs/node](https://docs.astro.build/en/guides/integrations-guide/node/) 어댑터를 사용하는 Node.js
 - **글꼴:** Press Start 2P(레트로 게임 글꼴)
 - **API:** GitHub 기여 그래프 API
