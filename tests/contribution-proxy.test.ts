@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ContributionCache } from '../src/lib/contribution-cache';
+import { ContributionCacheNotConfiguredError, type ContributionCache } from '../src/lib/contribution-cache';
 import { handleContributionRequest } from '../src/lib/contribution-proxy';
 
 function createCache(): ContributionCache {
@@ -105,7 +105,7 @@ describe('handleContributionRequest', () => {
 		const cache = createCache();
 		vi.mocked(cache.get).mockRejectedValue(new Error('Redis unavailable'));
 		const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ total: 1 }));
-		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
 		const response = await handleContributionRequest({
 			request: createRequest(),
@@ -116,6 +116,28 @@ describe('handleContributionRequest', () => {
 
 		expect(response.status).toBe(200);
 		expect(cache.set).not.toHaveBeenCalled();
+		expect(warning).toHaveBeenCalledWith(
+			'Contribution cache unavailable; fetching without cache',
+			expect.any(Error),
+		);
+	});
+
+	it('does not warn when Redis is intentionally unconfigured', async () => {
+		const cache = createCache();
+		vi.mocked(cache.get).mockRejectedValue(new ContributionCacheNotConfiguredError());
+		const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ total: 1 }));
+		const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+		const response = await handleContributionRequest({
+			request: createRequest(),
+			username: 'octocat',
+			cache,
+			fetcher,
+		});
+
+		expect(response.status).toBe(200);
+		expect(cache.set).not.toHaveBeenCalled();
+		expect(warning).not.toHaveBeenCalled();
 	});
 
 	it('returns successful data when writing to the shared cache fails', async () => {

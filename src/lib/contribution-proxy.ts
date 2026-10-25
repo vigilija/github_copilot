@@ -1,4 +1,4 @@
-import type { ContributionCache } from './contribution-cache';
+import { ContributionCacheNotConfiguredError, type ContributionCache } from './contribution-cache';
 
 const CACHE_TTL_SECONDS = 300;
 const CACHE_KEY_PREFIX = 'contributions:v1:';
@@ -73,7 +73,9 @@ export async function handleContributionRequest({
 		}
 	} catch (error) {
 		cacheAvailable = false;
-		console.warn('Contribution cache unavailable; fetching without cache', error);
+		if (!(error instanceof ContributionCacheNotConfiguredError)) {
+			console.warn('Contribution cache unavailable; fetching without cache', error);
+		}
 	}
 
 	const controller = new AbortController();

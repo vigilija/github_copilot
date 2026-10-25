@@ -97,6 +97,10 @@ Use the installation path that matches your machine:
 > ✅ **You now have the app preview in one terminal and Copilot CLI ready in another.**
 <!-- track:cli:end -->
 
+### Optional Redis cache
+
+The contribution API works without Redis and fetches fresh data directly from GitHub. To enable the five-minute contribution cache, run Redis locally and set `REDIS_URL=redis://localhost:6379` in your environment before starting the app. For a hosted Redis instance, use its provided connection URL and keep credentials out of source control.
+
 ## Section 2: Context Engineering
 
 Context engineering is how you teach AI about your codebase. The better the context, the better every future response will be.

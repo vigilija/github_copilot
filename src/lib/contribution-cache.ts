@@ -5,13 +5,20 @@ export interface ContributionCache {
 	set(_key: string, _value: string, _ttlSeconds: number): Promise<void>;
 }
 
+export class ContributionCacheNotConfiguredError extends Error {
+	constructor() {
+		super('REDIS_URL is not configured');
+		this.name = 'ContributionCacheNotConfiguredError';
+	}
+}
+
 let client: ReturnType<typeof createClient> | undefined;
 let connectionPromise: Promise<void> | undefined;
 
 async function getReadyClient() {
 	const url = process.env.REDIS_URL;
 	if (!url) {
-		throw new Error('REDIS_URL is not configured');
+		throw new ContributionCacheNotConfiguredError();
 	}
 
 	if (!client) {
