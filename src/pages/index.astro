@@ -73,10 +73,13 @@ const title = 'GitHub Contribution Battle Arena';
 					</div>
 				</div>
 
-				<button id="battle-button" type="submit">Start battle</button>
+				<button id="battle-button" type="submit">Battle!</button>
 				<p id="battle-status" class="status" role="status" aria-live="polite"></p>
 			</form>
 
+			<div id="battle-countdown" class="countdown-overlay" role="status" aria-live="assertive" hidden>
+				<p id="countdown-text" class="countdown-text"></p>
+			</div>
 			<section id="results" class="results" aria-label="Battle results" hidden></section>
 			<section class="history" aria-labelledby="history-heading">
 				<header class="history-header">
@@ -374,6 +377,35 @@ const title = 'GitHub Contribution Battle Arena';
 		display: none;
 	}
 
+	:global(.countdown-overlay) {
+		position: fixed;
+		z-index: 20;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		padding: 1.5rem;
+		background: rgb(5 5 18 / 88%);
+		backdrop-filter: blur(5px);
+	}
+
+	:global(.countdown-overlay[hidden]) {
+		display: none;
+	}
+
+	:global(.countdown-text) {
+		margin: 0;
+		color: var(--arcade-primary);
+		font-size: clamp(2rem, 15vw, 7rem);
+		line-height: 1.5;
+		text-align: center;
+		text-shadow: 0 0 12px var(--arcade-primary), 0 0 36px rgb(var(--arcade-primary-rgb) / 75%);
+		animation: countdown-pop 900ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+	}
+
+	.results.results-enter {
+		animation: results-slide-in 650ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+	}
+
 	.history {
 		margin-top: 2rem;
 		padding: 1.25rem;
@@ -668,6 +700,35 @@ const title = 'GitHub Contribution Battle Arena';
 		}
 	}
 
+	@keyframes countdown-pop {
+		from {
+			opacity: 0;
+			transform: scale(0.55);
+		}
+
+		35% {
+			opacity: 1;
+			transform: scale(1.12);
+		}
+
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes results-slide-in {
+		from {
+			opacity: 0;
+			transform: translateY(36px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
 	@keyframes champion-enter {
 		from {
 			opacity: 0;
@@ -834,6 +895,8 @@ const title = 'GitHub Contribution Battle Arena';
 	const battleButton = document.querySelector<HTMLButtonElement>('#battle-button');
 	const themeToggle = document.querySelector<HTMLButtonElement>('#theme-toggle');
 	const soundToggle = document.querySelector<HTMLButtonElement>('#sound-toggle');
+	const battleCountdown = document.querySelector<HTMLDivElement>('#battle-countdown');
+	const countdownText = document.querySelector<HTMLParagraphElement>('#countdown-text');
 	const battleStatus = document.querySelector<HTMLParagraphElement>('#battle-status');
 	const playerOneError = document.querySelector<HTMLParagraphElement>('#player-one-error');
 	const playerTwoError = document.querySelector<HTMLParagraphElement>('#player-two-error');
@@ -842,7 +905,8 @@ const title = 'GitHub Contribution Battle Arena';
 	const clearHistoryButton = document.querySelector<HTMLButtonElement>('#clear-history');
 	const dayTooltip = document.querySelector<HTMLDivElement>('#day-tooltip');
 
-	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !themeToggle || !soundToggle || !battleStatus
+	if (!form || !playerOneInput || !playerTwoInput || !battleButton || !themeToggle || !soundToggle
+		|| !battleCountdown || !countdownText || !battleStatus
 		|| !playerOneError || !playerTwoError || !results || !historyList || !clearHistoryButton || !dayTooltip) {
 		throw new Error('Battle page is missing required form elements.');
 	}
@@ -917,6 +981,35 @@ const title = 'GitHub Contribution Battle Arena';
 		} catch (error) {
 			reportAudioError(error);
 		}
+	}
+
+	function waitForCountdownStep(signal: AbortSignal): Promise<void> {
+		return new Promise((resolve) => {
+			const finish = () => {
+				window.clearTimeout(timeout);
+				signal.removeEventListener('abort', finish);
+				resolve();
+			};
+			const timeout = window.setTimeout(finish, 1_000);
+			signal.addEventListener('abort', finish, { once: true });
+			if (signal.aborted) finish();
+		});
+	}
+
+	async function runBattleCountdown(signal: AbortSignal): Promise<void> {
+		const steps = ['3...', '2...', '1...', '⚡ FIGHT! ⚡'];
+		battleCountdown.hidden = false;
+
+		for (const step of steps) {
+			if (signal.aborted) break;
+			countdownText.textContent = step;
+			countdownText.style.animation = 'none';
+			void countdownText.offsetWidth;
+			countdownText.style.animation = '';
+			await waitForCountdownStep(signal);
+		}
+
+		battleCountdown.hidden = true;
 	}
 
 	themeToggle.addEventListener('click', () => {
@@ -1307,6 +1400,8 @@ const title = 'GitHub Contribution Battle Arena';
 		setFieldError(playerTwoInput, playerTwoError, playerTwoMessage, Boolean(playerTwoMessage));
 		results.replaceChildren();
 		results.hidden = true;
+		results.classList.remove('results-enter');
+		battleCountdown.hidden = true;
 
 		if (playerOneMessage || playerTwoMessage) {
 			playSound('explosion');
@@ -1326,14 +1421,19 @@ const title = 'GitHub Contribution Battle Arena';
 		battleStatus.classList.remove('is-error', 'shake');
 		playSound('coin');
 		battleButton.disabled = true;
-		battleButton.textContent = 'Loading battle...';
+		battleButton.textContent = 'Fighting...';
 		battleStatus.classList.add('is-loading');
 		battleStatus.textContent = 'Fetching contribution data for both players...';
+		const countdownController = new AbortController();
 
 		try {
-			const [playerOneData, playerTwoData] = await Promise.all([
+			const contributionsPromise = Promise.all([
 				fetchContributions(usernames[0]),
 				fetchContributions(usernames[1]),
+			]);
+			const [[playerOneData, playerTwoData]] = await Promise.all([
+				contributionsPromise,
+				runBattleCountdown(countdownController.signal),
 			]);
 
 			const winner = playerOneData.total_contributions === playerTwoData.total_contributions
@@ -1368,6 +1468,8 @@ const title = 'GitHub Contribution Battle Arena';
 				renderPlayer(usernames[1], playerTwoData),
 			);
 			results.hidden = false;
+			void results.offsetWidth;
+			results.classList.add('results-enter');
 			playSound('power-up');
 			const updatedHistory = [historyEntry, ...battleHistory].slice(0, maxHistoryEntries);
 			try {
@@ -1392,9 +1494,11 @@ const title = 'GitHub Contribution Battle Arena';
 			battleStatus.classList.add('is-error');
 			triggerShake(battleStatus);
 		} finally {
+			countdownController.abort();
+			battleCountdown.hidden = true;
 			battleStatus.classList.remove('is-loading');
 			battleButton.disabled = false;
-			battleButton.textContent = 'Start battle';
+			battleButton.textContent = 'Battle!';
 		}
 	});
 </script>
